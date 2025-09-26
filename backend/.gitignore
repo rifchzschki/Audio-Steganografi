@@ -8,6 +8,12 @@
 *.so
 *.dylib
 
+# Binary yang dihasilkan oleh Air/Go build
+tmp/
+
+# Log file (jika ada)
+*.log
+
 # Test binary, built with `go test -c`
 *.test
 
