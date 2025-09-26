@@ -1,4 +1,4 @@
-module github.com/rifchzschki/Audio-Stegnografi/backend
+module github.com/rifchzschki/Audio-Steganografi/backend
 
 go 1.25.1
 
