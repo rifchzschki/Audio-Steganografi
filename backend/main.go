@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/rifchzschki/go-gin-react-project/backend/routes"
+	"github.com/rifchzschki/Audio-Steganografi/backend/routes"
 )
 
 func main() {

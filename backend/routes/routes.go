@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/yourusername/go-gin-react-project/backend/controllers" // Ganti dengan path modul Anda
+	"github.com/rifchzschki/Audio-Steganografi/backend/controllers"
 )
 
 // SetupRouter mendefinisikan semua route di aplikasi.

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yourusername/go-gin-react-project/backend/models" // Ganti dengan path modul Anda
+	"github.com/rifchzschki/Audio-Steganografi/backend/models"
 )
 
 // HandleHello adalah handler untuk endpoint /hello.
