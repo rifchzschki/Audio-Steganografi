@@ -67,17 +67,21 @@ func DecodeX(){
 
 func EncodeX(){
     inputMP3 := "cover.mp3"      
-    secretFile := "graph.png"   
+    secretFile := "pdf.pdf"   
     outputMP3 := "stego.mp3"     
     key := "STEGANO"             // Encryption key/seed
-    width := 3                   // LSB width (1, 2, 3, or 4)
+    width := 4                   // LSB width (1, 2, 3, or 4)
     encrypt := false             
     random := true               
-
-    if err := encoder.EncodeFile(inputMP3, secretFile, outputMP3, key, width, encrypt, random); err != nil {
+	outputName, psnrVal, audioQuality, err := encoder.EncodeFile(inputMP3, secretFile, outputMP3, key, width, encrypt, random)
+    if err != nil {
         fmt.Printf("Error: %v\n", err)
         os.Exit(1)
     }
+	fmt.Printf("Output File: %s\n", outputName)
+	fmt.Printf("Psnr Value: %f\n", psnrVal)
+	fmt.Printf("Audio Quality: %s\n", audioQuality)
+
 }
 
 func ExtendedVignereExample() {

@@ -13,6 +13,7 @@ import (
     "github.com/rifchzschki/Audio-Steganografi/backend/models/mp3"
     "github.com/rifchzschki/Audio-Steganografi/backend/utils/payload"
     "github.com/rifchzschki/Audio-Steganografi/backend/utils/sig"
+    "github.com/rifchzschki/Audio-Steganografi/backend/utils/psnr"
 )
 
 func seedFromKey(key string) int64 { 
@@ -21,22 +22,22 @@ func seedFromKey(key string) int64 {
 }
 
 // EncodeFile embeds a secret file into an MP3 file using steganography
-func EncodeFile(inputMP3, secretFile, outputMP3, key string, width int, encrypt, random bool) error {
+func EncodeFile(inputMP3, secretFile, outputMP3, key string, width int, encrypt, random bool) (outputfile string, psnrVal float64,audioQuality string,err error) {
     // Validate width parameter
     if width != 1 && width != 2 && width != 4 && width != 3  {
-        return fmt.Errorf("width must be 1, 2, 3, or 4")
+        return "",0.0,"",fmt.Errorf("width must be 1, 2, 3, or 4")
     }
 
     // Read cover MP3 file
     coverBytes, err := os.ReadFile(inputMP3)
     if err != nil {
-        return fmt.Errorf("failed to read input MP3: %v", err)
+        return "",0.0,"",fmt.Errorf("failed to read input MP3: %v", err)
     }
 
     // Parse MP3
     f, err := mp3.Parse(coverBytes)
     if err != nil {
-        return fmt.Errorf("failed to parse MP3: %v", err)
+        return "",0.0,"",fmt.Errorf("failed to parse MP3: %v", err)
     }
 
     // Read secret file
@@ -44,7 +45,7 @@ func EncodeFile(inputMP3, secretFile, outputMP3, key string, width int, encrypt,
     ext := filepath.Ext(name)
     secretBytes, err := os.ReadFile(secretFile)
     if err != nil {
-        return fmt.Errorf("failed to read secret file: %v", err)
+        return "",0.0,"",fmt.Errorf("failed to read secret file: %v", err)
     }
 
 	fmt.Printf("Encoding file: %s (%s) - %d bytes\n", name, ext, len(secretBytes))
@@ -88,19 +89,22 @@ func EncodeFile(inputMP3, secretFile, outputMP3, key string, width int, encrypt,
         audio = append(audio, fr.Data...)
     }
 
+	originalAudio := make([]byte, len(audio))
+    copy(originalAudio, audio)
+
     // Create order array
     order := make([]int, len(audio))
     for i := range audio {
         order[i] = i
     }
     if len(order) == 0 {
-        return fmt.Errorf("no audio bytes found")
+        return "",0.0,"",fmt.Errorf("no audio bytes found")
     }
 
     // Check capacity
     capBits := len(order) * width
     if capBits < len(bits) {
-        return fmt.Errorf("capacity too small: need %d bits, have %d", len(bits), capBits)
+        return "",0.0,"",fmt.Errorf("capacity too small: need %d bits, have %d", len(bits), capBits)
     }
 
     // Randomize order if requested
@@ -144,9 +148,14 @@ func EncodeFile(inputMP3, secretFile, outputMP3, key string, width int, encrypt,
     // Serialize and write output
     outBytes := mp3.Serialize(f)
     if err := os.WriteFile(outputMP3, outBytes, 0644); err != nil {
-        return fmt.Errorf("failed to write output file: %v", err)
+        return "",0.0,"",fmt.Errorf("failed to write output file: %v", err)
     }
 
     fmt.Printf("Successfully encoded: bits=%d width=%d file=%s\n", len(bits), width, outputMP3)
-    return nil
+	psnrValue, err := psnr.CalculatePSNR(originalAudio, audio)
+	if err != nil {
+        return "",0.0,"",fmt.Errorf("Error calculating PSNR: %v\n", err)
+    }
+	qualityStatus := psnr.GetQualityStatus(psnrValue)
+    return outputMP3,psnrValue,qualityStatus, nil
 }
