@@ -6,6 +6,7 @@ import (
 	"log"
 	"path/filepath"
 	"os"
+	"strings"
 	"github.com/rifchzschki/Audio-Steganografi/backend/models"
 	"github.com/rifchzschki/Audio-Steganografi/backend/service"
 	"github.com/rifchzschki/Audio-Steganografi/backend/service/decoder"
@@ -31,28 +32,46 @@ func Run(args []string) {
 }
 
 func DecodeX(){
-	// Example usage with manual variables
-    inputFile := "stego.mp3"     // Input steganographic MP3 file
-    outputFile := "decoded.txt"  // Output file (can be empty to use original name)
-    key := "STEGANO"            // Encryption key/seed
-    random := true              // Use random order
-    debug := false              // Enable debug logs
+	
+    inputFile := "stego.mp3"     
+    outputDir:= "output"  
+    key := "STEGANO"            
+    random := true              
+    debug := false              
     
-    if err := decoder.DecodeFile(inputFile, outputFile, key, random, debug); err != nil {
-        fmt.Printf("Error: %v\n", err)
+	if outputDir != "" {
+        if err := os.MkdirAll(outputDir, 0755); err != nil {
+            fmt.Errorf("failed to create output directory: %v", err)
+			os.Exit(1)
+        }
+    }
+
+	extractedFile, err := decoder.DecodeFile(inputFile, outputDir, key, random, debug)
+    if err != nil {
         os.Exit(1)
     }
+
+    // Get file info
+    fileInfo, err := os.Stat(extractedFile)
+    if err != nil {
+        fmt.Errorf("failed to get extracted file info: %v", err)
+		os.Exit(1)
+    }
+
+    ext := strings.ToLower(filepath.Ext(extractedFile))
+    fmt.Printf("Successfully extracted %s file: %s (%d bytes)\n", ext, extractedFile, fileInfo.Size())
+
+    return
 }
 
 func EncodeX(){
-	// Example usage with manual variables
-    inputMP3 := "cover.mp3"      // Input MP3 cover file
-    secretFile := "secret.txt"   // Secret file to hide
-    outputMP3 := "stego.mp3"     // Output steganographic MP3
+    inputMP3 := "cover.mp3"      
+    secretFile := "graph.png"   
+    outputMP3 := "stego.mp3"     
     key := "STEGANO"             // Encryption key/seed
     width := 1                   // LSB width (1, 2, or 4)
-    encrypt := false             // Encrypt the payload
-    random := true               // Use random order
+    encrypt := false             
+    random := true               
 
     if err := encoder.EncodeFile(inputMP3, secretFile, outputMP3, key, width, encrypt, random); err != nil {
         fmt.Printf("Error: %v\n", err)

@@ -23,8 +23,8 @@ func seedFromKey(key string) int64 {
 // EncodeFile embeds a secret file into an MP3 file using steganography
 func EncodeFile(inputMP3, secretFile, outputMP3, key string, width int, encrypt, random bool) error {
     // Validate width parameter
-    if width != 1 && width != 2 && width != 4 {
-        return fmt.Errorf("width must be 1, 2, or 4")
+    if width != 1 && width != 2 && width != 4 && width != 3  {
+        return fmt.Errorf("width must be 1, 2, 3, or 4")
     }
 
     // Read cover MP3 file
@@ -46,6 +46,8 @@ func EncodeFile(inputMP3, secretFile, outputMP3, key string, width int, encrypt,
     if err != nil {
         return fmt.Errorf("failed to read secret file: %v", err)
     }
+
+	fmt.Printf("Encoding file: %s (%s) - %d bytes\n", name, ext, len(secretBytes))
 
     // Encrypt if requested
     if encrypt {

@@ -6,12 +6,13 @@ import (
     "fmt"
     "math/rand"
     "os"
-
+	"path/filepath"
     "github.com/rifchzschki/Audio-Steganografi/backend/service"
     "github.com/rifchzschki/Audio-Steganografi/backend/models/meta"
     "github.com/rifchzschki/Audio-Steganografi/backend/models/mp3"
     "github.com/rifchzschki/Audio-Steganografi/backend/utils/payload"
     "github.com/rifchzschki/Audio-Steganografi/backend/utils/sig"
+	"strings"
 )
 
 func seedFromKey(key string) int64 { 
@@ -98,17 +99,17 @@ func tryDecode(audio []byte, key string, random bool, w int, dbg bool) ([]byte, 
 }
 
 // DecodeFile decodes a steganographic MP3 file and extracts the hidden payload
-func DecodeFile(inputFile, outputFile, key string, random, debug bool) error {
+func DecodeFile(inputFile, outputDir, key string, random, debug bool) (string, error) {
     // Read input file
     b, err := os.ReadFile(inputFile)
     if err != nil {
-        return fmt.Errorf("failed to read input file: %v", err)
+        return "",fmt.Errorf("failed to read input file: %v", err)
     }
     
     // Parse MP3
     f, err := mp3.Parse(b)
     if err != nil {
-        return fmt.Errorf("failed to parse MP3: %v", err)
+        return "",fmt.Errorf("failed to parse MP3: %v", err)
     }
     
     // Extract audio data
@@ -131,34 +132,45 @@ func DecodeFile(inputFile, outputFile, key string, random, debug bool) error {
             }
             
             // Determine output filename
-            fname := h.Name
-            if outputFile != "" {
-                fname = outputFile
+            var fname string
+            if outputDir != "" {
+                fname = filepath.Join(outputDir, h.Name)
+            } else {
+                fname = h.Name
+            }
+            
+            dir := filepath.Dir(fname)
+            if dir != "." {
+                if err := os.MkdirAll(dir, 0755); err != nil {
+                    return "", fmt.Errorf("failed to create output directory: %v", err)
+                }
+            }
+            
+            // Handle filename conflicts
+            originalFname := fname
+            counter := 1
+            for {
+                if _, err := os.Stat(fname); os.IsNotExist(err) {
+                    break
+                }
+                // File exists, create new name
+                ext := filepath.Ext(originalFname)
+                nameWithoutExt := strings.TrimSuffix(originalFname, ext)
+                fname = fmt.Sprintf("%s_%d%s", nameWithoutExt, counter, ext)
+                counter++
             }
             
             // Write output file
             if err := os.WriteFile(fname, pay, 0644); err != nil {
-                return fmt.Errorf("failed to write output file: %v", err)
+                return "", fmt.Errorf("failed to write output file: %v", err)
             }
             
-            fmt.Printf("Successfully decoded: width=%d bytes=%d file=%s\n", w, len(pay), fname)
-            return nil
+            fmt.Printf("Successfully decoded: width=%d bytes=%d file=%s (type: %s)\n", 
+                w, len(pay), fname, h.Ext)
+            
+            return fname, nil
         }
     }
     
-    return fmt.Errorf("signature not found - no hidden data detected")
-}
-
-func main() {
-    // Example usage with manual variables
-    inputFile := "stego.mp3"     // Input steganographic MP3 file
-    outputFile := "decoded.txt"  // Output file (can be empty to use original name)
-    key := "STEGANO"            // Encryption key/seed
-    random := true              // Use random order
-    debug := false              // Enable debug logs
-    
-    if err := DecodeFile(inputFile, outputFile, key, random, debug); err != nil {
-        fmt.Printf("Error: %v\n", err)
-        os.Exit(1)
-    }
+    return "",fmt.Errorf("signature not found - no hidden data detected")
 }
