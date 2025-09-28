@@ -119,7 +119,7 @@ func DecodeFile(inputFile, outputDir, key string, random, debug bool) (string, e
     }
     
     // Try different combinations of width and randomization
-    for _, w := range []int{1, 2, 4} {
+    for _, w := range []int{1, 2, 3, 4} {
         for _, rnd := range []bool{random, !random} {
             pay, h, ok := tryDecode(audio, key, rnd, w, debug)
             if !ok {
