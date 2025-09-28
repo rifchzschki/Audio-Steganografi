@@ -7,3 +7,11 @@ type LSBConfig struct {
 	LSBBits        int
 	SecretFilename string
 }
+
+type SteganographyResult struct {
+	ModifiedMP3File *MP3File
+	OriginalSize    int
+	ModifiedSize    int
+	Success         bool
+	Error           error
+}

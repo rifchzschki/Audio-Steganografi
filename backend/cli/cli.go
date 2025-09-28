@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"bytes"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"github.com/rifchzschki/Audio-Steganografi/backend/models"
 	"github.com/rifchzschki/Audio-Steganografi/backend/service"
@@ -15,6 +17,8 @@ func Run(args []string) {
 		ExtendedVignereExample()
 	case "stegano":
 		SteganoWithLSBExample()
+	case "stegano-audio":
+		SteganoAudioExample()
 	default:
 		fmt.Println("Unknown command")
 	}
@@ -69,4 +73,82 @@ func SteganoWithLSBExample() {
 		log.Fatalf("Extract error: %v", err)
 	}
 	fmt.Println("Extracted data:", string(extracted))
+}
+
+func SteganoAudioExample() {
+	fmt.Println("=== Real MP3 Steganography Test ===")
+	
+	samplePath := filepath.Join("sample", "sample-6s.mp3")
+	
+	secretData := []byte("Hellowwworldkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkjjjj")
+	config := models.LSBConfig{
+		LSBBits: 2,
+		Key:     "test",
+	}
+	
+	fmt.Printf("Original secret: %v\n", secretData)
+	fmt.Printf("Original secret as string: %q\n", secretData)
+	
+	decoder := service.NewMP3Decoder()
+	defer decoder.Close()
+	
+	err := decoder.LoadFile(samplePath)
+	if err != nil {
+		log.Fatal("LoadFile failed:", err)
+	}
+	
+	mp3File, err := decoder.Decode()
+	if err != nil {
+		log.Fatal("Decode failed:", err)
+	}
+	
+	fmt.Printf("MP3 decoded successfully, frames: %d\n", mp3File.GetTotalFrames())
+	
+	originalAudioData := decoder.GetAudioDataForSteganography(mp3File)
+	fmt.Printf("Original audio data length: %d\n", len(originalAudioData))
+	
+	stego := service.NewSteganoWithLSB(config)
+	capacity := stego.GetCapacity(len(originalAudioData))
+	fmt.Printf("Steganography capacity: %d bytes\n", capacity)
+	
+	if len(secretData) > capacity {
+		log.Fatal("Secret data too large for real MP3")
+	}
+	
+	result := decoder.EmbedDataWithSteganography(mp3File, secretData, config)
+	if !result.Success {
+		log.Fatal("MP3 embedding failed:", result.Error)
+	}
+	
+	fmt.Printf("MP3 embedding successful\n")
+	
+	extractedFromMP3, err := decoder.ExtractDataWithSteganography(result.ModifiedMP3File, len(secretData), config)
+	if err != nil {
+		log.Fatal("MP3 extraction failed:", err)
+	}
+	
+	fmt.Printf("Extracted from MP3: %v\n", extractedFromMP3)
+	fmt.Printf("Extracted from MP3 as string: %q\n", extractedFromMP3)
+	fmt.Printf("Real MP3 steganography works: %v\n", bytes.Equal(secretData, extractedFromMP3))
+	
+	if bytes.Equal(secretData, extractedFromMP3) {
+		fmt.Println("SUCCESS: Real MP3 steganography is working perfectly!")
+	} else {
+		fmt.Println("FAILED: Real MP3 steganography has issues")
+		
+		fmt.Println("\nTrying with smaller data...")
+		smallSecret := []byte("Hi")
+		smallResult := decoder.EmbedDataWithSteganography(mp3File, smallSecret, config)
+		if !smallResult.Success {
+			log.Fatal("Small embedding failed:", smallResult.Error)
+		}
+		
+		smallExtracted, err := decoder.ExtractDataWithSteganography(smallResult.ModifiedMP3File, len(smallSecret), config)
+		if err != nil {
+			log.Fatal("Small extraction failed:", err)
+		}
+		
+		fmt.Printf("Small test - Original: %q, Extracted: %q, Success: %v\n", 
+			smallSecret, smallExtracted, bytes.Equal(smallSecret, smallExtracted))
+	}
 }
