@@ -14,7 +14,7 @@ func main() {
 		cmd := os.Args[1]
 		if cmd == "cli" {
 			// Jalankan mode CLI
-			cli.Run()
+			cli.Run(os.Args[2:])
 			return
 		}
 	}
