@@ -8,10 +8,6 @@ import (
 )
 
 func HandleHello(c *gin.Context) {
-	response := models.MessageResponse{
-		Status:  http.StatusOK,
-		Message: "Hello Cuy from Go Gin Controller!",
-	}
-
+	response := models.NewHelloResponse(true, "Hello, World!")
 	c.JSON(http.StatusOK, response)
 }

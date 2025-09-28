@@ -11,6 +11,10 @@
 # Binary yang dihasilkan oleh Air/Go build
 tmp/
 
+# Sample audio file (jika ada)
+*.mp3
+sample/
+
 # Log file (jika ada)
 *.log
 
