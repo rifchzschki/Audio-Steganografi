@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
-
+	"os"
 	"github.com/rifchzschki/Audio-Steganografi/backend/models"
 	"github.com/rifchzschki/Audio-Steganografi/backend/service"
+	"github.com/rifchzschki/Audio-Steganografi/backend/service/decoder"
+	"github.com/rifchzschki/Audio-Steganografi/backend/service/encoder"
 )
 
 func Run(args []string) {
@@ -19,9 +21,43 @@ func Run(args []string) {
 		SteganoWithLSBExample()
 	case "stegano-audio":
 		SteganoAudioExample()
+	case "en-x":
+		EncodeX()
+	case "dec-x":
+		DecodeX()
 	default:
 		fmt.Println("Unknown command")
 	}
+}
+
+func DecodeX(){
+	// Example usage with manual variables
+    inputFile := "stego.mp3"     // Input steganographic MP3 file
+    outputFile := "decoded.txt"  // Output file (can be empty to use original name)
+    key := "STEGANO"            // Encryption key/seed
+    random := true              // Use random order
+    debug := false              // Enable debug logs
+    
+    if err := decoder.DecodeFile(inputFile, outputFile, key, random, debug); err != nil {
+        fmt.Printf("Error: %v\n", err)
+        os.Exit(1)
+    }
+}
+
+func EncodeX(){
+	// Example usage with manual variables
+    inputMP3 := "cover.mp3"      // Input MP3 cover file
+    secretFile := "secret.txt"   // Secret file to hide
+    outputMP3 := "stego.mp3"     // Output steganographic MP3
+    key := "STEGANO"             // Encryption key/seed
+    width := 1                   // LSB width (1, 2, or 4)
+    encrypt := false             // Encrypt the payload
+    random := true               // Use random order
+
+    if err := encoder.EncodeFile(inputMP3, secretFile, outputMP3, key, width, encrypt, random); err != nil {
+        fmt.Printf("Error: %v\n", err)
+        os.Exit(1)
+    }
 }
 
 func ExtendedVignereExample() {
