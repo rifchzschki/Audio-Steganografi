@@ -33,16 +33,14 @@ func (r BaseResponse) GetMessage() string {
 }
 
 type BaseStegoRequest struct {
-	Key            string `json:"key" binding:"required"`
+	AudioFileName  string `json:"audio_file_name"`
+	SecretFilename string `json:"secret_file_name"`
 	UseEncryption  bool   `json:"use_encryption"`
 	UseRandomStart bool   `json:"use_random_start"`
 	LSBBits        int    `json:"lsb_bits" binding:"required,min=1,max=4"`
+	Key            string `json:"key" binding:"required"`
 }
 
-type StegoRequest struct {
-	BaseStegoRequest
-	SecretFilename string `json:"secret_filename"`
-}
 
 type StegoResponse struct {
 	BaseResponse
@@ -62,7 +60,10 @@ func NewStegoResponse(success bool, message string, psnr float64, url string) *S
 }
 
 type ExtractRequest struct {
-	BaseStegoRequest
+	Key            string `json:"key" binding:"required"`
+	UseRandomStart bool   `json:"use_random_start"`
+	SecretFilename string `json:"secret_file_name"`
+	OutputFileName string `json:"output_file_name"`
 }
 
 type ExtractResponse struct {

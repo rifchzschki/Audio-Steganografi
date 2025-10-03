@@ -24,6 +24,13 @@ func SetupRouter() *gin.Engine {
 	api := router.Group("/api")
 	{
 		api.GET("/hello", controllers.HandleHello) 
+
+		api.POST("/encode", controllers.HandleEncode)
+        api.GET("/download/stego/:filename", controllers.HandleDownloadStego)
+        api.GET("/play/stego/:filename", controllers.HandlePlayStego)
+		
+		api.POST("/decode", controllers.HandleDecode)
+        api.GET("/download/extracted/:filename", controllers.HandleDownloadExtracted)
 	}
 
 	return router

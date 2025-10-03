@@ -1,11 +1,19 @@
 package models
 
 type LSBConfig struct {
-	Key            string
+	AudioFileName  string
+	SecretFilename string
 	UseEncryption  bool
 	UseRandomStart bool
 	LSBBits        int
+	Key            string
+}
+
+type LSBConfigDecoder struct {
+	Key            string 
+	UseRandomStart bool
 	SecretFilename string
+	OutputFileName string
 }
 
 type SteganographyResult struct {

@@ -152,10 +152,13 @@ func EncodeFile(inputMP3, secretFile, outputMP3, key string, width int, encrypt,
     }
 
     fmt.Printf("Successfully encoded: bits=%d width=%d file=%s\n", len(bits), width, outputMP3)
-	psnrValue, err := psnr.CalculatePSNR(originalAudio, audio)
-	if err != nil {
-        return "",0.0,"",fmt.Errorf("Error calculating PSNR: %v\n", err)
+	psnrValue, _, err := psnr.DetectAudioFormat(originalAudio, audio)
+    if err != nil {
+        fmt.Printf("Warning: Failed to calculate PSNR: %v\n", err)
+        return outputMP3, 0.0, "Unknown", nil
+    } else {
+        qualityStatus := psnr.GetQualityStatus(psnrValue)
+        fmt.Printf("\nQuality Status: %s", qualityStatus)
+        return outputMP3, psnrValue, qualityStatus, nil
     }
-	qualityStatus := psnr.GetQualityStatus(psnrValue)
-    return outputMP3,psnrValue,qualityStatus, nil
 }

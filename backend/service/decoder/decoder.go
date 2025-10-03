@@ -12,7 +12,7 @@ import (
     "github.com/rifchzschki/Audio-Steganografi/backend/models/mp3"
     "github.com/rifchzschki/Audio-Steganografi/backend/utils/payload"
     "github.com/rifchzschki/Audio-Steganografi/backend/utils/sig"
-	"strings"
+	_"strings"
 )
 
 func seedFromKey(key string) int64 { 
@@ -99,9 +99,10 @@ func tryDecode(audio []byte, key string, random bool, w int, dbg bool) ([]byte, 
 }
 
 // DecodeFile decodes a steganographic MP3 file and extracts the hidden payload
-func DecodeFile(inputFile, outputDir, key string, random, debug bool) (string, error) {
+func DecodeFile(inputFile, key, outputFileName string, random, debug bool) (string, error) {
     // Read input file
     b, err := os.ReadFile(inputFile)
+    outputDir:= "output"
     if err != nil {
         return "",fmt.Errorf("failed to read input file: %v", err)
     }
@@ -134,7 +135,7 @@ func DecodeFile(inputFile, outputDir, key string, random, debug bool) (string, e
             // Determine output filename
             var fname string
             if outputDir != "" {
-                fname = filepath.Join(outputDir, h.Name)
+                fname = filepath.Join(outputDir, outputFileName)
             } else {
                 fname = h.Name
             }
@@ -146,19 +147,19 @@ func DecodeFile(inputFile, outputDir, key string, random, debug bool) (string, e
                 }
             }
             
-            // Handle filename conflicts
-            originalFname := fname
-            counter := 1
-            for {
-                if _, err := os.Stat(fname); os.IsNotExist(err) {
-                    break
-                }
-                // File exists, create new name
-                ext := filepath.Ext(originalFname)
-                nameWithoutExt := strings.TrimSuffix(originalFname, ext)
-                fname = fmt.Sprintf("%s_%d%s", nameWithoutExt, counter, ext)
-                counter++
-            }
+            // // Handle filename conflicts
+            // originalFname := fname
+            // counter := 1
+            // for {
+            //     if _, err := os.Stat(fname); os.IsNotExist(err) {
+            //         break
+            //     }
+            //     // File exists, create new name
+            //     ext := filepath.Ext(originalFname)
+            //     nameWithoutExt := strings.TrimSuffix(originalFname, ext)
+            //     fname = fmt.Sprintf("%s_%d%s", nameWithoutExt, counter, ext)
+            //     counter++
+            // }
             
             // Write output file
             if err := os.WriteFile(fname, pay, 0644); err != nil {
