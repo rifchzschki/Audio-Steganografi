@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"strings"
+
 	"github.com/rifchzschki/Audio-Steganografi/backend/models"
 	"github.com/rifchzschki/Audio-Steganografi/backend/service"
 	"github.com/rifchzschki/Audio-Steganografi/backend/service/decoder"
@@ -32,7 +33,6 @@ func Run(args []string) {
 }
 
 func DecodeX(){
-	
     inputFile := "stego.mp3"     
     outputDir:= "output"  
     key := "STEGANO"            
@@ -66,8 +66,8 @@ func DecodeX(){
 }
 
 func EncodeX(){
-    inputMP3 := "cover.mp3"      
-    secretFile := "pdf.pdf"   
+    inputMP3 := "sample/sample-6s.mp3"      
+    secretFile := "secret.txt"   
     outputMP3 := "stego.mp3"     
     key := "STEGANO"             // Encryption key/seed
     width := 4                   // LSB width (1, 2, 3, or 4)
