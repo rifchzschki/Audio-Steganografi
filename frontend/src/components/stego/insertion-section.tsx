@@ -65,6 +65,7 @@ export default function InsertionSection() {
     setCoverFile(f);
     setPsnr(null);
     setStegoFile(null);
+    console.log('Cover file selected:', f);
   }
 
   function handleSecretInput(e: React.ChangeEvent<HTMLInputElement>) {
