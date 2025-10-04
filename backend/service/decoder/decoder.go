@@ -162,7 +162,7 @@ func DecodeFile(inputFile, key, outputFileName string, random, debug bool) (stri
             // }
             
             // Write output file
-            if err := os.WriteFile(fname, pay, 0644); err != nil {
+            if err := os.WriteFile(fname+h.Ext, pay, 0644); err != nil {
                 return "", fmt.Errorf("failed to write output file: %v", err)
             }
             

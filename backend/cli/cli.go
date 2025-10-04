@@ -34,7 +34,7 @@ func Run(args []string) {
 
 func DecodeX(){
     inputFile := "stego.mp3"     
-    outputDir:= "output"  
+    outputDir:= "output.png"  
     key := "STEGANO"            
     random := true              
     debug := false              
@@ -46,7 +46,7 @@ func DecodeX(){
         }
     }
 
-	extractedFile, err := decoder.DecodeFile(inputFile, outputDir, key, random, debug)
+	extractedFile, err := decoder.DecodeFile(inputFile, key,outputDir, random, debug)
     if err != nil {
 		fmt.Errorf("failed to get extracted file info: %v", err)
         os.Exit(1)
@@ -66,8 +66,8 @@ func DecodeX(){
 }
 
 func EncodeX(){
-    inputMP3 := "sample/sample-6s.mp3"      
-    secretFile := "secret.txt"   
+    inputMP3 := "cover.mp3"      
+    secretFile := "graph.png"   
     outputMP3 := "stego.mp3"     
     key := "STEGANO"             // Encryption key/seed
     width := 4                   // LSB width (1, 2, 3, or 4)
