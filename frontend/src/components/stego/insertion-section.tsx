@@ -15,6 +15,8 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import type { LsbBits } from '@/models/stego';
+import { SteganographyService } from '@/service/steganografi';
 import type * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -28,16 +30,24 @@ export default function InsertionSection() {
   const [key, setKey] = useState('');
   const [useEncryption, setUseEncryption] = useState(true);
   const [useRandomStart, setUseRandomStart] = useState(false);
-  const [lsbBits, setLsbBits] = useState<1 | 2 | 3 | 4>(2);
+  const [lsbBits, setLsbBits] = useState<LsbBits>(2);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [psnr, setPsnr] = useState<number | null>(null);
-  const [stegoFile, setStegoFile] = useState<NullableFile>(null);
   const [stegoName, setStegoName] = useState('stego-audio.mp3');
+  const [serverStegoFilename, setServerStegoFilename] = useState<string | null>(
+    null
+  );
+  const [stegoStreamUrl, setStegoStreamUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Object URLs
   const coverUrl = useObjectUrl(coverFile);
-  const stegoUrl = useObjectUrl(stegoFile);
+  const [stegoPreviewUrl, setStegoPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStegoPreviewUrl(stegoStreamUrl);
+  }, [stegoStreamUrl]);
 
   // Capacity (mock-up): Simulate based on audio size and LSB bits to illustrate UI
   const capacityBytes = useMemo(() => {
@@ -64,61 +74,91 @@ export default function InsertionSection() {
     const f = e.target.files?.[0] || null;
     setCoverFile(f);
     setPsnr(null);
-    setStegoFile(null);
-    console.log('Cover file selected:', f);
+    setServerStegoFilename(null);
+    setStegoStreamUrl(null);
+    setError(null);
+    setStegoName('stego-audio.mp3');
   }
 
   function handleSecretInput(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0] || null;
     setSecretFile(f);
     setPsnr(null);
-    setStegoFile(null);
+    setServerStegoFilename(null);
+    setStegoStreamUrl(null);
+    setError(null);
+    setStegoName('stego-audio.mp3');
   }
 
   async function onInsert() {
-    if (!canProcess) return;
+    if (!canProcess || !coverFile || !secretFile) return;
     setIsProcessing(true);
     setPsnr(null);
-    setStegoFile(null);
+    setServerStegoFilename(null);
+    setStegoStreamUrl(null);
+    setError(null);
 
-    // Simulate processing delay and results
-    await new Promise((r) => setTimeout(r, 1200));
-    // Simulate PSNR in [28, 45] dB range for demo
-    const simulated = Math.round((28 + Math.random() * 17) * 10) / 10;
-    setPsnr(simulated);
+    try {
+      const response = await SteganographyService.encode({
+        audioFile: coverFile,
+        secretFile,
+        key,
+        lsbBits,
+        useEncryption,
+        useRandomStart,
+      });
 
-    // Create a demo "stego" file (mock)
-    const nameBase =
-      coverFile?.name?.replace(/\.(mp3|mpeg)$/i, '') || 'stego-audio';
-    const outName = `${nameBase}-stego.mp3`;
-    setStegoName(outName);
-    const demoBlob = new Blob(
-      [
-        `[demo-stego]\nkey=${key}\nlsb=${lsbBits}\nencrypted=${useEncryption}\nrandomStart=${useRandomStart}\n`,
-      ],
-      {
-        type: 'audio/mpeg',
+      setPsnr(response.psnr ?? null);
+
+      if (response.stegoFileUrl) {
+        const fileIdentifier = response.stegoFileUrl;
+        const suggestedName = fileIdentifier.split('/').pop() ?? fileIdentifier;
+        setServerStegoFilename(fileIdentifier);
+        setStegoName(suggestedName);
+        const streamUrl =
+          SteganographyService.getStegoStreamUrl(fileIdentifier);
+        console.log(streamUrl);
+        setStegoStreamUrl(streamUrl);
       }
-    );
-    const outFile = new File([demoBlob], outName, { type: 'audio/mpeg' });
-    setStegoFile(outFile);
 
-    toast('Insertion complete', {
-      description: 'Stego-audio generated. Review PSNR and save the result.',
-    });
-    setIsProcessing(false);
+      toast('Insertion complete', {
+        description: response.message,
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to encode audio';
+      setError(message);
+      toast('Insertion failed', {
+        description: message,
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   }
 
   function onDownloadStego() {
-    if (!stegoFile) return;
-    const url = URL.createObjectURL(stegoFile);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = stegoName || stegoFile.name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    if (!serverStegoFilename) return;
+
+    void (async () => {
+      try {
+        const blob = await SteganographyService.downloadStego(
+          serverStegoFilename
+        );
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = stegoName || serverStegoFilename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to download stego file';
+        setError(message);
+        toast('Download failed', { description: message });
+      }
+    })();
   }
 
   return (
@@ -297,6 +337,12 @@ export default function InsertionSection() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertTitle>Insertion failed</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <div>
             <Label className="block">PSNR</Label>
             {psnr == null ? (
@@ -321,8 +367,8 @@ export default function InsertionSection() {
           <AudioCompare
             originalUrl={coverUrl || undefined}
             originalName={coverFile?.name}
-            stegoUrl={stegoUrl || undefined}
-            stegoName={stegoFile?.name}
+            stegoUrl={stegoPreviewUrl || undefined}
+            stegoName={serverStegoFilename || undefined}
           />
 
           <div className="grid gap-2 md:grid-cols-[1fr_auto] md:items-end">
@@ -335,7 +381,7 @@ export default function InsertionSection() {
                 placeholder="stego-audio.mp3"
               />
             </div>
-            <Button onClick={onDownloadStego} disabled={!stegoFile}>
+            <Button onClick={onDownloadStego} disabled={!serverStegoFilename}>
               Save Stego-Audio
             </Button>
           </div>

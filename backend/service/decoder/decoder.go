@@ -12,7 +12,7 @@ import (
     "github.com/rifchzschki/Audio-Steganografi/backend/models/mp3"
     "github.com/rifchzschki/Audio-Steganografi/backend/utils/payload"
     "github.com/rifchzschki/Audio-Steganografi/backend/utils/sig"
-	_"strings"
+	"strings"
 )
 
 func seedFromKey(key string) int64 { 
@@ -135,7 +135,14 @@ func DecodeFile(inputFile, key, outputFileName string, random, debug bool) (stri
             // Determine output filename
             var fname string
             if outputDir != "" {
+                if outputFileName == "" {
+                    outputFileName = h.Name
+                }
+                base := filepath.Base(outputFileName)
+                ext := filepath.Ext(base)
+                outputFileName = strings.TrimSuffix(base, ext) 
                 fname = filepath.Join(outputDir, outputFileName)
+                
             } else {
                 fname = h.Name
             }
@@ -169,7 +176,7 @@ func DecodeFile(inputFile, key, outputFileName string, random, debug bool) (stri
             fmt.Printf("Successfully decoded: width=%d bytes=%d file=%s (type: %s)\n", 
                 w, len(pay), fname, h.Ext)
             
-            return fname, nil
+            return fname+h.Ext, nil
         }
     }
     

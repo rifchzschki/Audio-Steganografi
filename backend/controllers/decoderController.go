@@ -70,7 +70,7 @@ func HandleDecode(c *gin.Context){
         }
     }
 
-    resp := models.NewExtractResponse(true, "Decode Success", filepath.Base(extractedFile), extractedFile)
+    resp := models.NewExtractResponse(true, "Decode Success", extractedFile, filepath.Base(extractedFile))
     c.JSON(http.StatusOK, resp)
 
 }

@@ -4,11 +4,16 @@ export interface BaseResponse<T = unknown> {
   data?: T;
 }
 
-export interface SteganographyResponse {
+export interface EncodeResponse {
   success: boolean;
   message: string;
-  fileUrl?: string;
-  fileName?: string;
-  extractedData?: string;
-  capacity?: number;
+  psnr?: number;
+  stegoFileUrl?: string;
+}
+
+export interface DecodeResponse {
+  success: boolean;
+  message: string;
+  secretFileUrl?: string;
+  secretFilename?: string;
 }
